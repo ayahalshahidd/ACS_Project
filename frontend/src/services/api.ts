@@ -5,7 +5,7 @@
 
 import axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_BASE_URL = 'http://localhost:8000'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -63,12 +63,18 @@ export const coursesAPI = {
 // Enrollments API
 export const enrollmentsAPI = {
   create: async (courseId: number, studentId: number) => {
-    // VULNERABLE: CSRF - No CSRF token sent
-    const response = await api.post('/api/v1/enrollments', {
-      course_id: courseId,
-      student_id: studentId,
-    })
-    return response.data
+    // FIX: Instead of sending a JSON object {course_id, student_id},
+    // we send URLSearchParams which mimics a standard HTML Form.
+    const formData = new URLSearchParams();
+    formData.append('course_id', courseId.toString());
+    formData.append('student_id', studentId.toString());
+
+    const response = await api.post('/api/v1/enrollments', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+    return response.data;
   },
   
   delete: async (id: number) => {
@@ -87,19 +93,25 @@ export const enrollmentsAPI = {
 // Admin API
 export const adminAPI = {
   createCourse: async (courseData: any) => {
-    const response = await api.post('/api/v1/admin/courses', courseData)
+    // VULNERABLE: Trust Boundary Violation
+    // We manually add a static secret header that the backend blindly trusts.
+    const response = await api.post('/api/v1/admin/courses', courseData, {
+      headers: { 'X-Admin-Access': 'SuperSecretAdmin123' }
+    })
     return response.data
   },
+
+  
+}
+export const auditAPI = {
+  getLogs: async () => {
+    // VULNERABLE: Broken Access Control
+    // This should be restricted, but any authenticated user can hit this.
+    const response = await api.get('/api/v1/audit');
+    return response.data;
+  }
 }
 
-// Audit API
-export const auditAPI = {
-  getLogs: async (userId?: number) => {
-    const params = userId ? { user: userId } : {}
-    const response = await api.get('/api/v1/audit', { params })
-    return response.data
-  },
-}
 
 export default api
 

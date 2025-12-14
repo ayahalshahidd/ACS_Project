@@ -32,3 +32,11 @@ class Enrollment(Base):
     # Unique constraint
     __table_args__ = (UniqueConstraint('course_id', 'user_id', name='unique_enrollment'),)
 
+class AuditRecord(Base):
+    __tablename__ = "audit_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    actor_id = Column(Integer) # Who did it?
+    action = Column(String)    # What happened?
+    target = Column(String)    # Which course/user?
+    details = Column(String)
+    timestamp = Column(DateTime, default=datetime.utcnow)

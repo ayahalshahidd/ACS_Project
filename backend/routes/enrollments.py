@@ -3,7 +3,7 @@ Enrollment routes
 VULNERABLE: CSRF - No token validation
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Form
 from sqlalchemy.orm import Session
 from database import get_db
 from models.enrollment import Enrollment, EnrollmentStatus
@@ -21,57 +21,25 @@ class EnrollmentRequest(BaseModel):
 
 @router.post("")
 async def create_enrollment(
-    enrollment_data: EnrollmentRequest,
+    course_id: int = Form(...),    # Changed from Pydantic model to Form
+    student_id: int = Form(...),   # Changed from Pydantic model to Form
     db: Session = Depends(get_db)
-    # VULNERABLE: No CSRF token parameter or validation
 ):
     """
-    Create enrollment
-    VULNERABLE: CSRF - Missing CSRF token check
-    Attack: Malicious website can make POST requests to enroll users
+    VULNERABLE: CSRF
+    Now accepts standard HTML Form data, making it easy to exploit.
     """
-    # Check if course exists
-    course = db.query(Course).filter(Course.id == enrollment_data.course_id).first()
-    if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
+    # ... keep your existing logic below (checking course, capacity, etc.) ...
     
-    # Check capacity
-    current_enrollments = db.query(Enrollment).filter(
-        Enrollment.course_id == enrollment_data.course_id,
-        Enrollment.status == EnrollmentStatus.ENROLLED
-    ).count()
-    
-    if current_enrollments >= course.capacity:
-        raise HTTPException(status_code=400, detail="Course is full")
-    
-    # Check if already enrolled
-    existing = db.query(Enrollment).filter(
-        Enrollment.course_id == enrollment_data.course_id,
-        Enrollment.user_id == enrollment_data.student_id
-    ).first()
-    
-    if existing:
-        raise HTTPException(status_code=400, detail="Already enrolled")
-    
-    # Create enrollment
+    # Example logic using the new variables:
     enrollment = Enrollment(
-        course_id=enrollment_data.course_id,
-        user_id=enrollment_data.student_id,
+        course_id=course_id,
+        user_id=student_id,
         status=EnrollmentStatus.ENROLLED
     )
-    
     db.add(enrollment)
     db.commit()
-    db.refresh(enrollment)
-    
-    return {
-        "id": enrollment.id,
-        "course_id": enrollment.course_id,
-        "user_id": enrollment.user_id,
-        "status": enrollment.status.value,
-        "message": "Enrollment successful"
-    }
-
+    return {"message": "Enrollment successful"}
 
 @router.delete("/{enrollment_id}")
 async def drop_enrollment(

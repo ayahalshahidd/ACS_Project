@@ -8,44 +8,62 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate()
-  const isLoggedIn = localStorage.getItem('user') !== null
+  
+  // VULNERABLE: Retrieving user data from localStorage. 
+  // A student can open DevTools and change "role": "student" to "admin" 
+  // to make the Admin link appear instantly.
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isLoggedIn = !!user.id;
 
   const handleLogout = () => {
-    localStorage.removeItem('user')
-    navigate('/login')
-  }
+    localStorage.removeItem('user');
+    // Also clear session cookie for the backend
+    document.cookie = "sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    navigate('/login');
+  };
 
   return (
     <div className="layout">
       <header className="header">
         <div className="container">
-          <Link to="/" className="logo">
-            Course Registration System
-          </Link>
           <nav className="nav">
+            <Link to="/courses">Catalog</Link>
+            
             {isLoggedIn ? (
               <>
-                <Link to="/dashboard">Dashboard</Link>
-                <Link to="/courses">Courses</Link>
-                <Link to="/admin">Admin</Link>
+                {/* Visible to Students and Admins */}
+                <Link to="/dashboard">My Dashboard</Link>
+
+                {/* VULNERABLE: UI-only role protection for Instructor Dashboard */}
+                {user.role === 'instructor' && (
+                  <Link to="/instructor" style={{ color: '#00ff88' }}>Instructor</Link>
+                )}
+
+                {/* VULNERABLE: UI-only role protection for Admin Panel */}
+                {(user.role === 'admin' || user.role === 'registrar') && (
+                  <Link to="/admin" style={{ color: '#ffcc00' }}>Admin Panel</Link>
+                )}
+
                 <button onClick={handleLogout} className="logout-btn">
-                  Logout
+                  Logout ({user.email})
                 </button>
               </>
             ) : (
-              <Link to="/login">Login</Link>
+              <Link to="/login" className="login-link">Login</Link>
             )}
           </nav>
         </div>
       </header>
+
       <main className="main">
         <div className="container">
           {children}
         </div>
       </main>
+
       <footer className="footer">
         <div className="container">
-          <p>&copy; 2024 Course Registration System - Vulnerable Application</p>
+          <p>&copy; 2024 Advanced Cyber Security - Project 1 Baseline</p>
         </div>
       </footer>
     </div>
@@ -53,4 +71,3 @@ const Layout = ({ children }: LayoutProps) => {
 }
 
 export default Layout
-
