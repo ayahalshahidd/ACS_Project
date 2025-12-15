@@ -15,10 +15,13 @@
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^4.2.1",
     "vite": "^5.0.8",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "cross-env": "^7.0.3"
   },
   "scripts": {
     "dev": "vite",
+    "dev:http": "cross-env USE_HTTP=true VITE_API_URL=http://127.0.0.1:8000 vite",
+    "dev:https": "cross-env USE_HTTP=false VITE_API_URL=https://127.0.0.1:8000 vite",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0"

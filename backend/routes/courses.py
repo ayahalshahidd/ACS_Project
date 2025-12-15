@@ -66,22 +66,38 @@ async def get_course(
     course_id: int,
     db: Session = Depends(get_db)
 ):
-    """Get course details"""
-    course = db.query(Course).filter(Course.id == course_id).first()
-    
-    if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
-    
-    return {
-        "id": course.id,
-        "code": course.code,
-        "title": course.title,
-        "description": course.description,
-        "capacity": course.capacity,
-        "prereq_ids": course.prereq_ids,
-        "schedule": course.schedule,
-        "instructor_id": course.instructor_id
-    }
+    """
+    Get course details
+    VULNERABLE: Error messages expose sensitive database information
+    """
+    try:
+        course = db.query(Course).filter(Course.id == course_id).first()
+        
+        if not course:
+            # VULNERABLE: Error message exposes database structure
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Course with ID {course_id} not found in courses table. Query executed: SELECT * FROM courses WHERE id = {course_id}"
+            )
+        
+        return {
+            "id": course.id,
+            "code": course.code,
+            "title": course.title,
+            "description": course.description,
+            "capacity": course.capacity,
+            "prereq_ids": course.prereq_ids,
+            "schedule": course.schedule,
+            "instructor_id": course.instructor_id
+        }
+    except Exception as e:
+        # VULNERABLE: Exposing full exception details including database connection info
+        import traceback
+        error_details = traceback.format_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database error occurred: {str(e)}\n\nFull traceback:\n{error_details}\n\nDatabase connection: {db.bind.url if hasattr(db, 'bind') else 'Unknown'}"
+        )
 
 
 

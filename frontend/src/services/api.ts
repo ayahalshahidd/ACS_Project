@@ -5,8 +5,11 @@
 
 import axios from 'axios'
 
-const API_BASE_URL = 'http://localhost:8000'
-
+// Use direct backend URL for Wireshark/Burp Suite interception
+// When VITE_API_URL is set, use it; otherwise default to HTTP for Wireshark visibility
+// For Wireshark: Use direct URL (http://127.0.0.1:8000) so traffic is visible on network interface
+// For HTTPS: Set VITE_API_URL=https://127.0.0.1:8000
+const API_BASE_URL = (import.meta.env as { VITE_API_URL?: string }).VITE_API_URL || 'http://127.0.0.1:8000'
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true, // Include cookies
@@ -14,6 +17,21 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 })
+
+// Add error interceptor to help debug certificate issues
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === 'ERR_CERT_AUTHORITY_INVALID' || 
+        error.code === 'CERT_HAS_EXPIRED' ||
+        error.message?.includes('certificate')) {
+      console.error('Certificate Error: The backend uses a misconfigured certificate.')
+      console.error('Please visit https://localhost:8000 in your browser first and accept the certificate warning.')
+      console.error('This is expected behavior for the security vulnerability demonstration.')
+    }
+    return Promise.reject(error)
+  }
+)
 
 // Auth API
 export const authAPI = {

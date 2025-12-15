@@ -87,17 +87,30 @@ npm install
 ```
 
 ### Running the Application
-```bash
-# Terminal 1: Start backend
-cd backend
-python main.py
-# Backend runs at http://localhost:8000
 
-# Terminal 2: Start frontend
+**Option 1: HTTP Mode (Unencrypted - for network analysis)**
+```bash
+# Terminal 1: Start backend on HTTP
+cd backend
+USE_HTTP=true python main.py
+
+# Terminal 2: Start frontend (proxies to HTTP backend)
 cd frontend
-npm run dev
-# Frontend runs at http://localhost:3000
+npm run dev:http
 ```
+
+**Option 2: HTTPS Mode (Misconfigured Certificate)**
+```bash
+# Terminal 1: Start backend on HTTPS
+cd backend
+python main.py  # HTTPS by default
+
+# Terminal 2: Start frontend (proxies to HTTPS backend)
+cd frontend
+npm run dev:https
+```
+
+**See [LAUNCH_OPTIONS.md](LAUNCH_OPTIONS.md) for detailed configuration options.**
 
 ### GitHub Setup
 

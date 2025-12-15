@@ -38,10 +38,15 @@ cp .env.example .env
 # Edit .env if needed
 
 # Run the server
+# HTTP mode (unencrypted):
+USE_HTTP=true python main.py
+# OR HTTPS mode (misconfigured certificate):
 python main.py
 ```
 
-Backend will run at `http://localhost:8000`
+Backend will run at:
+- **HTTP:** `http://localhost:8000` (when `USE_HTTP=true`)
+- **HTTPS:** `https://localhost:8000` (default, misconfigured certificate)
 
 ### 3. Frontend Setup
 
@@ -51,15 +56,18 @@ cd frontend
 # Install dependencies
 npm install
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env if needed
-
 # Run development server
+# HTTP mode (matches HTTP backend):
+npm run dev:http
+# OR HTTPS mode (matches HTTPS backend):
+npm run dev:https
+# OR default (uses USE_HTTP env var):
 npm run dev
 ```
 
-Frontend will run at `http://localhost:3000`
+Frontend will run at `http://localhost:3000` and automatically proxy to backend.
+
+**See `LAUNCH_OPTIONS.md` for detailed HTTP/HTTPS configuration.**
 
 ## GitHub Repository Setup
 
