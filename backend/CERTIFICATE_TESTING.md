@@ -200,3 +200,4 @@ To demonstrate these vulnerabilities in a security assessment:
 - In production, always use valid certificates from trusted CAs
 - Certificate misconfigurations are a common security issue in real-world applications
 
+

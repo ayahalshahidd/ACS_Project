@@ -134,3 +134,16 @@ pytest
 
 
 
+
+
+Run tests:
+
+```bash
+
+pytest
+
+```
+
+
+
+

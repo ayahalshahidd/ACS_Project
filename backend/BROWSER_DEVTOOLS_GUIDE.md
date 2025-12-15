@@ -202,3 +202,4 @@ fetch('http://localhost:8000/api/v1/debug/info')
 
 All of these demonstrate **sensitive data transmitted without encryption**!
 
+
