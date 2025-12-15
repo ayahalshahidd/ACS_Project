@@ -25,7 +25,7 @@ async def get_courses(
     """
     if filter:
         # VULNERABLE: Direct SQL injection - no parameterization
-        query = f"SELECT * FROM courses WHERE {filter}"
+        query = f"SELECT * FROM courses WHERE title LIKE '%{filter}%'"
         result = db.execute(text(query))
         courses = result.fetchall()
         
