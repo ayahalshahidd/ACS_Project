@@ -4,8 +4,15 @@ from models.user import User, UserRole
 from models.course import Course
 from models.enrollment import Enrollment, EnrollmentStatus
 from models.audit import AuditRecord
-import hashlib
+from passlib.context import CryptContext # <--- CHANGED: Use Passlib instead of hashlib
 from datetime import datetime
+
+# --- SECURITY CONFIGURATION ---
+# We use the same configuration as auth.py to ensure compatibility
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
 
 def reset_and_seed():
     # 1. This line creates the actual .db file and all tables
@@ -16,19 +23,21 @@ def reset_and_seed():
     db = SessionLocal()
 
     print("[*] Seeding data...")
-    # 2. Create Admin (VULNERABLE: MD5)
+    
+    # 2. Create Admin (SECURE: Bcrypt)
+    # The backend will now recognize this hash format ($2b$...)
     admin = User(
         email="admin@university.edu",
-        password_hash=hashlib.md5("admin123".encode()).hexdigest(),
+        password_hash=get_password_hash("admin123"), 
         role=UserRole.ADMIN
     )
     db.add(admin)
     db.flush() # Get admin ID
 
-    # 3. Create Student (VULNERABLE: MD5)
+    # 3. Create Student (SECURE: Bcrypt)
     student = User(
         email="student@university.edu",
-        password_hash=hashlib.md5("password123".encode()).hexdigest(),
+        password_hash=get_password_hash("password123"),
         role=UserRole.STUDENT,
         student_id="STU001"
     )
@@ -41,18 +50,18 @@ def reset_and_seed():
     db.add_all([c1, c2])
     db.flush()
 
-    # 5. Create an initial Audit Log (Data Exposure Proof)
+    # 5. Create an initial Audit Log
     log = AuditRecord(
         actor_id=admin.id,
         action="SYSTEM_INIT",
         target="Database",
-        details="Database reset and seeded for security assessment."
+        details="Database reset and seeded with Secure Bcrypt Hashes."
     )
     db.add(log)
 
     db.commit()
     db.close()
-    print("[+] Success! Database is now ready for Phase 2 exploits.")
+    print("[+] Success! Database is now ready and aligned with Auth Patch.")
 
 if __name__ == "__main__":
     reset_and_seed()

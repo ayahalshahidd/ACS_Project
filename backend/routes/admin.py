@@ -10,8 +10,12 @@ from models.enrollment import Enrollment, EnrollmentStatus
 from pydantic import BaseModel
 from typing import Optional, List
 
-router = APIRouter()
+# --- KEY FIXES: Add these two imports ---
+from models.user import User
+from auth.dependencies import get_current_user 
+# ----------------------------------------
 
+router = APIRouter()
 
 class CourseCreateRequest(BaseModel):
     code: str
@@ -26,10 +30,23 @@ class CourseCreateRequest(BaseModel):
 @router.post("/courses")
 async def create_course(
     course_data: CourseCreateRequest,
-    db: Session = Depends(get_db)
-    # TODO: Add admin authentication check
+    db: Session = Depends(get_db),
+    # --- SECURITY PATCH ---
+    # We require a logged-in user here. 
+    # Because we imported 'User' above, this line will now work.
+    current_user: User = Depends(get_current_user)
 ):
     """Create course (admin only)"""
+    
+    # --- RBAC CHECK ---
+    # Ensure the logged-in user is actually an admin
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403, 
+            detail="Operation not permitted. Admins only."
+        )
+    # ------------------
+
     # Check if course code already exists
     existing = db.query(Course).filter(Course.code == course_data.code).first()
     if existing:
@@ -60,9 +77,15 @@ async def create_course(
 @router.get("/courses/{course_id}")
 async def get_course_admin(
     course_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    # OPTIONAL: You should probably secure this one too!
+    current_user: User = Depends(get_current_user) 
 ):
     """Get course details (admin)"""
+    
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+
     course = db.query(Course).filter(Course.id == course_id).first()
     
     if not course:
@@ -84,9 +107,15 @@ async def get_course_admin(
 async def override_enrollment(
     enrollment_id: int,
     action: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    # OPTIONAL: Secure this one too
+    current_user: User = Depends(get_current_user)
 ):
     """Override enrollment (admin only)"""
+    
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+
     enrollment = db.query(Enrollment).filter(Enrollment.id == enrollment_id).first()
     
     if not enrollment:
@@ -100,4 +129,3 @@ async def override_enrollment(
     db.commit()
     
     return {"message": f"Enrollment {action}d successfully"}
-
